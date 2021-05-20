@@ -2,6 +2,7 @@ import javax.swing.*;
 import java.awt.Container;
 import java.awt.GridLayout;
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.event.*;
 
 public class Farkle implements ActionListener{
@@ -13,7 +14,7 @@ public class Farkle implements ActionListener{
     int[] dieValue = new int[6];
     final int HOT_DIE = 0;
     final int SCORE_DIE = 1;
-    final int UNLOCKED_DIE = 2;
+    final int LOCKED_DIE = 2;
     Container buttonContainer = new Container();
     JButton rollButton = new JButton("Roll");
     JButton scoreButton = new JButton("Score");
@@ -40,6 +41,7 @@ public class Farkle implements ActionListener{
             diceButtons[i].setIcon(imageIcons[i]);
             diceButtons[i].setEnabled(false);
             diceButtons[i].addActionListener(this);
+            diceButtons[i].setBackground(Color.LIGHT_GRAY);
             diceContainer.add(diceButtons[i]);
         }
         buttonContainer.setLayout(new GridLayout(1, 3));
@@ -84,5 +86,112 @@ public class Farkle implements ActionListener{
                 }
             }
         }
+        else if (e.getSource().equals(scoreButton)){
+            int[] valueCount = new int[7];
+            for (int i = 0; i < diceButtons.length; i++){
+                if (buttonState[i] == SCORE_DIE){
+                    valueCount[dieValue[i] +1]++;
+                }
+            }
+            if ((valueCount[2] > 0 && valueCount[2] < 3) || (valueCount[3] > 0 && valueCount[3] < 3) || (valueCount[4] > 0 && valueCount[4] < 3) || (valueCount[6] > 0 && valueCount[6] < 3)){
+                //invalid die
+                JOptionPane.showMessageDialog(frame, "Invalid Die Selected");
+            }
+            else if (valueCount[1] == 0 && valueCount[2] == 0 && valueCount[3] == 0 && valueCount[4] == 0 && valueCount[5] == 0 && valueCount[6] == 0){
+                Object[] options = {"Yes", "No"};
+                int dialogChoice = JOptionPane.showOptionDialog(frame, "Forfeit Score?", "Forfeit Score?", JOptionPane.DEFAULT_OPTION, JOptionPane.WARNING_MESSAGE, null, options, options[0]);
+                if (dialogChoice == JOptionPane.YES_OPTION){
+                    currentScore = 0;
+                    currentRound++;
+                    currentScoreLBL.setText("Current Score: " + currentScore);
+                    currentRoundLBL.setText("Current Round: " + currentRound);
+                    
+                    resetDice();
+                }
+            }
+            else{
+                if (valueCount[1] >= 3){
+                    currentScore += (valueCount[1] - 2) * 1000;
+                }
+                if (valueCount[2] >= 3){
+                    currentScore += (valueCount[2] - 2) * 200;
+                }
+                if (valueCount[3] >= 3){
+                    currentScore += (valueCount[3] - 2) * 300;
+                }
+                if (valueCount[4] >= 3){
+                    currentScore += (valueCount[4] - 2) * 400;
+                }
+                if (valueCount[5] >= 3){
+                    currentScore += (valueCount[5] - 2) * 500;
+                }
+                if (valueCount[6] >= 3){
+                    currentScore += (valueCount[6] - 2) * 600;
+                }
+                if (valueCount[1] < 3){
+                    currentScore += valueCount[1] * 100;
+                }
+                if (valueCount[5] < 3){
+                    currentScore += valueCount[5] * 50;
+                }
+                currentScoreLBL.setText("Current Score: " + currentScore);
+                for (int i = 0; i < diceButtons.length; i++){
+                    if (buttonState[i] == SCORE_DIE){
+                        buttonState[i] = LOCKED_DIE;
+                        diceButtons[i].setBackground(Color.BLUE);
+                    }
+                    diceButtons[i].setEnabled(false);
+                }
+                int lockedCount = 0;
+                for (int i = 0; i < diceButtons.length; i++){
+                    if (buttonState[i] == LOCKED_DIE){
+                        lockedCount++;
+                    }
+                }
+                if (lockedCount == 6){
+                    for (int i = 0; i < diceButtons.length; i++){
+                        buttonState[i] = HOT_DIE;
+                        diceButtons[i].setBackground(Color.LIGHT_GRAY);
+                    }
+                }
+                rollButton.setEnabled(true);
+                scoreButton.setEnabled(false);
+                stopButton.setEnabled(true);
+            }
+        }
+        else if (e.getSource().equals(stopButton)){
+            totalScore += currentScore;
+            currentScore = 0;
+            currentScoreLBL.setText("Current Score: " + currentScore);
+            totalScoreLBL.setText("Total Score: " + totalScore);
+            currentRound++;
+            currentRoundLBL.setText("Current Round: " + currentRound);
+            resetDice();
+        }
+        else{
+            for (int i = 0; i < diceButtons.length; i++){
+                if (e.getSource().equals(diceButtons[i])){
+                    if (buttonState[i] == HOT_DIE){
+                        diceButtons[i].setBackground(Color.RED);
+                        buttonState[i] = SCORE_DIE;
+                    }
+                    else{
+                        diceButtons[i].setBackground(Color.LIGHT_GRAY);
+                        buttonState[i] = HOT_DIE;
+                    }
+                }
+            }
+        }
+    }
+    
+    void resetDice(){
+        for (int i = 0; i < diceButtons.length; i++){
+                diceButtons[i].setEnabled(false);
+                buttonState[i] = HOT_DIE;
+                diceButtons[i].setBackground(Color.LIGHT_GRAY);
+        }
+        rollButton.setEnabled(true);
+        scoreButton.setEnabled(false);
+        stopButton.setEnabled(false);
     }
 }
